@@ -12,6 +12,7 @@ import com.fintrack.fintrack.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -32,12 +33,14 @@ public class BudgetService {
         List<Budget> budgets = budgetRepository.findByUserId(user.getId());
 
         if (budgets.isEmpty()) {
-            throw new ResourceNotFoundException("No budgets found for user: " + user.getId());
+            return List.of();
         }
 
+        Map<Long, BigDecimal> spendingByCategory = transactionService
+                .getCategorySpendingForUser(user.getId());
+
         List<BudgetResponse> budgetResponses = budgets.stream().map(budget -> {
-            BigDecimal spentAmount = transactionService.getTotalSpentInCategoryForUser(
-                    user.getId(), budget.getCategory().getId());
+            BigDecimal spentAmount = spendingByCategory.getOrDefault(budget.getCategory().getId(), BigDecimal.ZERO);
             return budgetMapper.toBudgetResponse(budget, spentAmount, budget.getCategory());
         })
                 .toList();

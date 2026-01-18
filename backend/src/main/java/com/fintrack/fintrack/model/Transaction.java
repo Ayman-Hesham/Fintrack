@@ -26,6 +26,17 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Transaction {
+
+    public Transaction(BigDecimal amount, LocalDate date, String description, TransactionType transactionType,
+            boolean isManual, BankAccount bankAccount) {
+        this.amount = amount;
+        this.date = date;
+        this.description = description;
+        this.transactionType = transactionType;
+        this.isManual = isManual;
+        this.bankAccount = bankAccount;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

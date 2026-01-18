@@ -113,6 +113,14 @@ public class TransactionService {
         return totalSpent != null ? totalSpent : BigDecimal.ZERO;
     }
 
+    public Map<Long, BigDecimal> getCategorySpendingForUser(Long userId) {
+        List<Object[]> results = transactionRepository.findTotalSpentByUserIdGroupByCategory(userId);
+        return results.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> row[1] != null ? (BigDecimal) row[1] : BigDecimal.ZERO));
+    }
+
     public List<TransactionResponse> syncTransactions(Long bankAccountId, User user) {
         BankAccount bankAccount = bankAccountService.getBankAccountById(bankAccountId);
 
@@ -189,25 +197,19 @@ public class TransactionService {
             List<Transaction> transactionsToSave = new ArrayList<>(mockTransactions.size());
 
             for (MockTransactionDTO mock : mockTransactions) {
-                Transaction t = new Transaction();
-                t.setAmount(mock.amount);
-                t.setDate(mock.date);
-                t.setDescription(mock.description);
-                t.setTransactionType(TransactionType.valueOf(mock.type));
-                t.setManual(false);
-                t.setBankAccount(bankAccount);
+                Transaction t = new Transaction(
+                        mock.getAmount(),
+                        mock.getDate(),
+                        mock.getDescription(),
+                        TransactionType.valueOf(mock.getType()),
+                        false,
+                        bankAccount);
 
-                Category category = null;
-                if (mock.getCategoryId() != null) {
-                    category = categoryMap.get(mock.getCategoryId());
-                }
-
-                if (category == null) {
-                    category = fallbackCategory;
-                }
+                Category category = (mock.getCategoryId() != null)
+                        ? categoryMap.get(mock.getCategoryId())
+                        : fallbackCategory;
 
                 t.setCategory(category);
-
                 transactionsToSave.add(t);
 
                 if (t.getTransactionType() == TransactionType.INCOME) {
