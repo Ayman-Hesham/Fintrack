@@ -60,7 +60,7 @@ cd backend
 # Run with the Maven Wrapper (Windows)
 ./mvnw.cmd spring-boot:run
 ```
-The backend server will start on `http://localhost:9090`.
+The backend server will start on `http://localhost:8000`.
 
 **Configuration:**
 The application uses `src/main/resources/application.properties` for configuration. Update the following fields if your local setup differs:
