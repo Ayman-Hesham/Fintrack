@@ -77,7 +77,8 @@ public class SecurityConfig {
                             objectMapper.writeValue(res.getWriter(), body);
                         }))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/register", "/api/auth/login", "/health", "/ready", "/alive")
+                        .requestMatchers("/api/auth/register", "/api/auth/login", "/health", "/ready", "/alive",
+                                "/actuator/**")
                         .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
