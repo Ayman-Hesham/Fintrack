@@ -1,0 +1,23 @@
+target/
+!.jar
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*.tmp
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+# Version control
+.git/
+.gitignore
+
+# Build logs and help
+HELP.md
+mvnw
+mvnw.cmd
+.mvn/
