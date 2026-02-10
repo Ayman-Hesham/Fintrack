@@ -50,8 +50,8 @@ jobs:
         context: ./${{ matrix.service.path }}
         push: true
         tags: |
-          ${{ env.ECR_REGISTRY }}/${{ matrix.service.name }}:${{ github.sha }}
-          ${{ env.ECR_REGISTRY }}/${{ matrix.service.name }}:latest
+          ${{ env.ECR_REGISTRY }}/fintrack/${{ matrix.service.name }}:${{ github.sha }}
+          ${{ env.ECR_REGISTRY }}/fintrack/${{ matrix.service.name }}:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -69,7 +69,7 @@ jobs:
     - name: Update Image Tag
       run: |
         cd gitops/k8s/base/${{ matrix.service.name }}
-        kustomize edit set image ${{ env.ECR_REGISTRY }}/${{ matrix.service.name }}:${{ github.sha }}
+        kustomize edit set image ${{ env.ECR_REGISTRY }}/fintrack/${{ matrix.service.name }}:${{ github.sha }}
 
     - name: Commit and push changes
       run: |
