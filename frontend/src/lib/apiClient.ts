@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9090';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://k8s-applicat-appingre-60cd718657-560319979.ap-southeast-1.elb.amazonaws.com';
 
 export const apiClient = axios.create({
     baseURL: API_BASE_URL,
