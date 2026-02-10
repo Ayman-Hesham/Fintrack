@@ -1,0 +1,87 @@
+name: Build, Push & Deploy via ArgoCD
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read 
+
+env:
+  AWS_REGION: ap-southeast-1
+  ECR_REGISTRY: 569946568662.dkr.ecr.ap-southeast-1.amazonaws.com
+  GITOPS_REPO: Ayman-Hesham/fintrack-infra
+  GITOPS_BRANCH: main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1 
+      matrix:
+        service:
+          - name: backend
+            path: backend
+          - name: frontend
+            path: frontend
+
+    steps:
+    - name: Checkout application repo
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::569946568662:role/github-actions-ecr
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build & Push Image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./${{ matrix.service.path }}
+        push: true
+        tags: |
+          ${{ env.ECR_REGISTRY }}/${{ matrix.service.name }}:${{ github.sha }}
+          ${{ env.ECR_REGISTRY }}/${{ matrix.service.name }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Checkout GitOps repo
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ env.GITOPS_REPO }}
+        ref: ${{ env.GITOPS_BRANCH }}
+        token: ${{ secrets.INFRASTRUCTURE_REPO_TOKEN }}
+        path: gitops
+
+    - name: Setup Kustomize
+      uses: imranismail/setup-kustomize@v2
+
+    - name: Update Image Tag
+      run: |
+        cd gitops/k8s/base/${{ matrix.service.name }}
+        kustomize edit set image ${{ env.ECR_REGISTRY }}/${{ matrix.service.name }}:${{ github.sha }}
+
+    - name: Commit and push changes
+      run: |
+        cd gitops
+        git config user.name "github-actions-bot"
+        git config user.email "github-actions-bot@users.noreply.github.com"
+
+        if [[ -n $(git status -s) ]]; then
+          git add .
+          git commit -m "deploy(${{ matrix.service.name }}): update image tag to ${{ github.sha }}"
+          git pull --rebase origin ${{ env.GITOPS_BRANCH }}
+          git push origin ${{ env.GITOPS_BRANCH }}
+        else
+          echo "No changes to commit"
+        fi
